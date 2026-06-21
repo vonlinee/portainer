@@ -429,6 +429,40 @@ InternalAuthSettings: portainer.InternalAuthSettings{
 
 注意：这个默认值只在数据目录首次初始化、settings 尚不存在时写入。已经启动过的本地实例不会因为改代码自动更新密码长度，需要清理本地数据目录，或者通过 Portainer 的 settings API/UI 修改现有 settings。
 
+清理 Windows 本地脚本默认数据目录：
+
+```powershell
+Remove-Item -Recurse -Force "$env:LOCALAPPDATA\PortainerCE\data"
+```
+
+清理 Linux/macOS/WSL 本地脚本默认数据目录：
+
+```bash
+rm -rf "${XDG_DATA_HOME:-$HOME/.local/share}/portainer-ce/data"
+```
+
+如果启动时指定了自定义数据目录，例如：
+
+```powershell
+.\dev\run_local_server.ps1 -DataPath "$env:TEMP\portainer-ce-data"
+```
+
+或：
+
+```bash
+./dev/run_local_server.sh --data /tmp/portainer-ce-data
+```
+
+则需要清理对应的自定义目录，而不是默认目录。清理后重新启动后端，`api/datastore/init.go` 中新的默认值才会重新写入 settings。
+
+初始化管理员页面会直接显示后端返回的实际值：
+
+```html
+Configured password minimum: {{ requiredPasswordLength }} characters.
+```
+
+这里的 `requiredPasswordLength` 来自 `SettingsService.publicSettings()` 返回的 `RequiredPasswordLength`。
+
 ## 10. 构建命令
 
 ### 构建前端
@@ -665,7 +699,29 @@ make dev-server
 
 它会重新编译 `dist/portainer` 并重启名为 `portainer` 的容器。
 
-### 13.5 修改前端代码后没有生效
+### 13.5 后端启动几分钟后提示初始化超时
+
+如果后端日志出现：
+
+```text
+the Portainer instance timed out for security purposes, to re-enable your Portainer instance, you will need to restart Portainer
+```
+
+这是 Portainer 的管理员初始化安全保护。后端启动时会启动 `adminMonitor`，如果 5 分钟内没有创建管理员账号，就会将实例标记为初始化超时，后续大部分 `/api` 请求会被重定向到 timeout 页面。
+
+相关代码：
+
+- `api/http/server.go`：`adminmonitor.New(5*time.Minute, server.DataStore)`
+- `api/adminmonitor/admin_monitor.go`：超时后设置 `adminInitDisabled = true`
+- `api/http/handler/users/admin_init.go`：创建管理员账号
+
+本地开发时的处理方式：
+
+1. 启动后尽快访问 `http://localhost:8999` 创建管理员账号。
+2. 如果已经超时，停止后端并重新启动。
+3. 如果你想重新走初始化流程，需要清理本地数据目录后再启动。
+
+### 13.6 修改前端代码后没有生效
 
 确认 `pnpm run dev` 仍在运行，并访问的是：
 
@@ -675,7 +731,7 @@ http://localhost:8999
 
 而不是直接访问后端的 `https://localhost:9443`。
 
-### 13.6 `make` 命令不存在
+### 13.7 `make` 命令不存在
 
 如果执行 `make deps`、`make dev` 时提示 `make: command not found` 或 PowerShell 提示无法识别 `make`，说明当前环境没有安装 GNU Make。
 
