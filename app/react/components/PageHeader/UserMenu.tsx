@@ -1,8 +1,9 @@
 import {
   Menu,
   MenuButton,
-  MenuList,
+  MenuItems,
   MenuLink as ReachMenuLink,
+  MenuPopover,
 } from '@reach/menu-button';
 import { UISrefProps, useSref } from '@uirouter/react';
 import clsx from 'clsx';
@@ -14,6 +15,7 @@ import { useCurrentUser } from '@/react/hooks/useUser';
 
 import styles from './HeaderTitle.module.css';
 import { ThemeSelector } from './UserMenuThemeSelector';
+import { positionHeaderMenu } from './positionHeaderMenu';
 
 export function UserMenu() {
   const { user } = useCurrentUser();
@@ -42,27 +44,32 @@ export function UserMenu() {
         <ChevronDown className={styles.arrowDown} />
       </MenuButton>
 
-      <MenuList
-        className={styles.menuList}
-        aria-label="User Menu"
-        data-cy="userMenu"
+      <MenuPopover
+        className={styles.menuPopover}
+        position={positionHeaderMenu}
       >
-        <MenuLink
-          to="portainer.account"
-          label="My account"
-          data-cy="userMenu-myAccount"
-        />
+        <MenuItems
+          className={styles.menuList}
+          aria-label="User Menu"
+          data-cy="userMenu"
+        >
+          <MenuLink
+            to="portainer.account"
+            label="My account"
+            data-cy="userMenu-myAccount"
+          />
 
-        <MenuLink
-          to="portainer.logout"
-          label="Log out"
-          data-cy="userMenu-logOut"
-        />
+          <MenuLink
+            to="portainer.logout"
+            label="Log out"
+            data-cy="userMenu-logOut"
+          />
 
-        <hr className="my-1 border-t border-gray-5 th-highcontrast:border-gray-7 th-dark:border-gray-7" />
+          <hr className="my-1 border-t border-gray-5 th-highcontrast:border-gray-7 th-dark:border-gray-7" />
 
-        <ThemeSelector user={user} />
-      </MenuList>
+          <ThemeSelector user={user} />
+        </MenuItems>
+      </MenuPopover>
     </Menu>
   );
 }

@@ -2,8 +2,9 @@ import clsx from 'clsx';
 import {
   Menu,
   MenuButton,
-  MenuList,
+  MenuItems,
   MenuLink as ReachMenuLink,
+  MenuPopover,
 } from '@reach/menu-button';
 import { UISrefProps, useSref } from '@uirouter/react';
 import Moment from 'moment';
@@ -22,6 +23,7 @@ import { notificationsStore } from '../../portainer/notifications/notifications-
 
 import headerStyles from './HeaderTitle.module.css';
 import notificationStyles from './NotificationsMenu.module.css';
+import { positionHeaderMenu } from './positionHeaderMenu';
 
 export function NotificationsMenu() {
   const notificationsStoreState = useStore(notificationsStore);
@@ -62,69 +64,74 @@ export function NotificationsMenu() {
         </div>
       </MenuButton>
 
-      <MenuList
-        className={clsx(headerStyles.menuList, notificationStyles.root)}
-        aria-label="Notifications Menu"
-        data-cy="notificationsMenu"
+      <MenuPopover
+        className={headerStyles.menuPopover}
+        position={positionHeaderMenu}
       >
-        <div>
-          <div
-            className={clsx(
-              notificationStyles.notificationContainer,
-              'vertical-center'
-            )}
-          >
-            <div>
-              <h4>Notifications</h4>
-            </div>
-            <div className={notificationStyles.itemLast}>
-              {reducedNotifications?.length > 0 && (
-                <Button
-                  color="none"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    onClear();
-                  }}
-                  data-cy="notification-deleteButton"
-                >
-                  Clear all
-                </Button>
+        <MenuItems
+          className={clsx(headerStyles.menuList, notificationStyles.root)}
+          aria-label="Notifications Menu"
+          data-cy="notificationsMenu"
+        >
+          <div>
+            <div
+              className={clsx(
+                notificationStyles.notificationContainer,
+                'vertical-center'
               )}
+            >
+              <div>
+                <h4>Notifications</h4>
+              </div>
+              <div className={notificationStyles.itemLast}>
+                {reducedNotifications?.length > 0 && (
+                  <Button
+                    color="none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      onClear();
+                    }}
+                    data-cy="notification-deleteButton"
+                  >
+                    Clear all
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        {reducedNotifications?.length > 0 ? (
-          <>
-            <div className={notificationStyles.notifications}>
-              {reducedNotifications.map((notification, index) => (
-                <MenuLink
-                  to="portainer.notifications"
-                  params={{ id: notification.id }}
-                  notification={notification}
-                  key={notification.id}
-                  onDelete={() => onDelete(notification.id)}
-                  data-cy={`notification-delete-button_${index}`}
-                />
-              ))}
-            </div>
+          {reducedNotifications?.length > 0 ? (
+            <>
+              <div className={notificationStyles.notifications}>
+                {reducedNotifications.map((notification, index) => (
+                  <MenuLink
+                    to="portainer.notifications"
+                    params={{ id: notification.id }}
+                    notification={notification}
+                    key={notification.id}
+                    onDelete={() => onDelete(notification.id)}
+                    data-cy={`notification-delete-button_${index}`}
+                  />
+                ))}
+              </div>
 
-            <div className={notificationStyles.notificationLink}>
-              <Link
-                to="portainer.notifications"
-                data-cy="notifications-see-all-link"
-              >
-                View all notifications
-              </Link>
+              <div className={notificationStyles.notificationLink}>
+                <Link
+                  to="portainer.notifications"
+                  data-cy="notifications-see-all-link"
+                >
+                  View all notifications
+                </Link>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center">
+              <Icon icon={Bell} size="xl" />
+              <p className="my-5">You have no notifications yet.</p>
             </div>
-          </>
-        ) : (
-          <div className="flex flex-col items-center">
-            <Icon icon={Bell} size="xl" />
-            <p className="my-5">You have no notifications yet.</p>
-          </div>
-        )}
-      </MenuList>
+          )}
+        </MenuItems>
+      </MenuPopover>
     </Menu>
   );
 

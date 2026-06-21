@@ -774,6 +774,89 @@ mkdir -p dist
 
 注意：这些脚本依赖 Bash、Docker socket 和常见 Unix 工具，因此直接在 PowerShell 中运行并不是推荐路径。
 
+### 13.8 远程 Docker 拉镜像时报 Docker Hub TLS 证书不匹配
+
+在远程服务器上执行 `docker pull` 或 `docker run` 时，如果出现类似错误：
+
+```text
+tls: failed to verify certificate: x509: certificate is valid for boa-apa.nicecloudsvc.com, not registry-1.docker.io
+```
+
+说明远程服务器访问 `registry-1.docker.io` 时，实际拿到的证书不是 Docker Hub 的证书，而是其他域名的证书。这不是 Portainer 的问题，也不是简单安装 CA 根证书就能解决的问题；证书域名已经不匹配，通常意味着 DNS、代理、镜像源、透明网关或云厂商网络出口把请求错误转发了。
+
+在远程服务器上确认：
+
+```bash
+openssl s_client -connect registry-1.docker.io:443 -servername registry-1.docker.io </dev/null 2>/dev/null | openssl x509 -noout -subject -issuer -ext subjectAltName
+```
+
+正常情况下证书应匹配 Docker Hub。如果输出类似：
+
+```text
+subject=CN = boa-apa.nicecloudsvc.com
+issuer=C = US, O = Amazon, CN = Amazon RSA 2048 M01
+X509v3 Subject Alternative Name:
+    DNS:boa-apa.nicecloudsvc.com
+```
+
+就说明访问链路被转到了错误的服务。
+
+继续排查：
+
+```bash
+getent hosts registry-1.docker.io
+nslookup registry-1.docker.io
+dig registry-1.docker.io
+cat /etc/resolv.conf
+cat /etc/hosts | grep docker
+env | grep -i proxy
+systemctl show docker --property=Environment
+sudo systemctl cat docker
+docker info | grep -A10 "Registry Mirrors"
+cat /etc/docker/daemon.json
+```
+
+临时绕过方式：不要让 Docker 自动访问 `registry-1.docker.io`，改为显式从国内镜像代理拉取并重新打 tag：
+
+```bash
+docker pull docker.m.daocloud.io/portainer/agent:2.39.0
+docker tag docker.m.daocloud.io/portainer/agent:2.39.0 portainer/agent:2.39.0
+```
+
+然后再启动 Agent：
+
+```bash
+docker run -d \
+  -p 9001:9001 \
+  --name portainer_agent \
+  --restart=always \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/lib/docker/volumes:/var/lib/docker/volumes \
+  portainer/agent:2.39.0
+```
+
+如果代理镜像源也不可用，可以在一台能正常访问 Docker Hub 的机器上执行：
+
+```bash
+docker pull portainer/agent:2.39.0
+docker save portainer/agent:2.39.0 -o portainer-agent-2.39.0.tar
+scp portainer-agent-2.39.0.tar user@remote:/tmp/
+```
+
+然后在远程服务器上导入：
+
+```bash
+docker load -i /tmp/portainer-agent-2.39.0.tar
+```
+
+最终修复仍然需要处理远程服务器的 DNS、代理、Docker mirror 或云厂商网络出口问题。
+
+参考讨论：
+
+```text
+https://forums.docker.com/t/tls-failed-to-verify-certificate-x509/137486/9
+```
+
 ## 14. 推荐日常开发流程
 
 首次准备：
