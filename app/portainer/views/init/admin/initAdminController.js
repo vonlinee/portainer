@@ -33,6 +33,8 @@ angular.module('portainer.app').controller('InitAdminController', [
       actionInProgress: false,
       showInitPassword: true,
       showRestorePortainer: false,
+      showPassword: false,
+      showConfirmPassword: false,
     };
 
     createAdministratorFlow();
@@ -40,6 +42,10 @@ angular.module('portainer.app').controller('InitAdminController', [
     $scope.togglePanel = function () {
       $scope.state.showInitPassword = !$scope.state.showInitPassword;
       $scope.state.showRestorePortainer = !$scope.state.showRestorePortainer;
+    };
+
+    $scope.togglePasswordVisibility = function (stateKey) {
+      $scope.state[stateKey] = !$scope.state[stateKey];
     };
 
     $scope.onChangeRestoreType = onChangeRestoreType;

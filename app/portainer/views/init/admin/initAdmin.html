@@ -47,7 +47,26 @@
             <div class="form-group">
               <label for="password" class="col-sm-4 control-label text-left">Password</label>
               <div class="col-sm-8">
-                <input type="password" class="form-control" ng-model="formValues.Password" id="password" name="password" ng-minlength="requiredPasswordLength" auto-focus />
+                <div class="relative">
+                  <input
+                    ng-attr-type="{{ state.showPassword ? 'text' : 'password' }}"
+                    class="form-control !pr-10"
+                    ng-model="formValues.Password"
+                    id="password"
+                    name="password"
+                    ng-minlength="requiredPasswordLength"
+                    auto-focus
+                  />
+                  <button
+                    type="button"
+                    class="absolute inset-y-0 right-0 z-20 flex items-center px-3 text-gray-7 hover:text-gray-8 focus:outline-none"
+                    ng-click="togglePasswordVisibility('showPassword')"
+                    aria-label="{{ state.showPassword ? 'Hide password' : 'Show password' }}"
+                  >
+                    <pr-icon ng-if="!state.showPassword" icon="'eye'"></pr-icon>
+                    <pr-icon ng-if="state.showPassword" icon="'eye-off'"></pr-icon>
+                  </button>
+                </div>
               </div>
             </div>
             <!-- !new-password-input -->
@@ -55,9 +74,23 @@
             <div class="form-group">
               <label for="confirm_password" class="col-sm-4 control-label text-left">Confirm password</label>
               <div class="col-sm-8">
-                <div class="input-group">
-                  <input type="password" class="form-control" ng-model="formValues.ConfirmPassword" id="confirm_password" />
-                  <span class="input-group-addon !rounded-r-[5px]">
+                <div class="relative">
+                  <input
+                    ng-attr-type="{{ state.showConfirmPassword ? 'text' : 'password' }}"
+                    class="form-control !pr-20"
+                    ng-model="formValues.ConfirmPassword"
+                    id="confirm_password"
+                  />
+                  <button
+                    type="button"
+                    class="absolute inset-y-0 right-8 z-20 flex items-center px-3 text-gray-7 hover:text-gray-8 focus:outline-none"
+                    ng-click="togglePasswordVisibility('showConfirmPassword')"
+                    aria-label="{{ state.showConfirmPassword ? 'Hide confirm password' : 'Show confirm password' }}"
+                  >
+                    <pr-icon ng-if="!state.showConfirmPassword" icon="'eye'"></pr-icon>
+                    <pr-icon ng-if="state.showConfirmPassword" icon="'eye-off'"></pr-icon>
+                  </button>
+                  <span class="absolute inset-y-0 right-0 z-20 flex items-center px-3">
                     <pr-icon ng-if="form.password.$viewValue !== '' && form.password.$viewValue === formValues.ConfirmPassword" icon="'check'" mode="'success'"></pr-icon>
                     <pr-icon ng-if="form.password.$viewValue === '' || form.password.$viewValue !== formValues.ConfirmPassword" icon="'x'" mode="'danger'"></pr-icon>
                   </span>
