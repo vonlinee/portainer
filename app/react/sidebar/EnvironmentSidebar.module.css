@@ -2,10 +2,10 @@
   background-color: var(--bg-sidebar-nav-color);
 }
 
-.closeBtn {
+.title-icon-btn {
   background-color: transparent;
 }
 
-.closeBtn:hover {
+.title-icon-btn:hover {
   background-color: var(--graphite-500);
 }

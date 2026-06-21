@@ -1,5 +1,5 @@
 import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Slash } from 'lucide-react';
 import clsx from 'clsx';
 import { useStore } from 'zustand';
@@ -14,6 +14,7 @@ import { useEnvironment } from '@/react/portainer/environments/queries/useEnviro
 import { environmentStore } from '@/react/hooks/current-environment-store';
 
 import { Icon } from '@@/Icon';
+import { CollapseExpandButton } from '@@/CollapseExpandButton';
 
 import { getPlatformIconByEnvironment } from '../portainer/environments/utils/get-platform-icon';
 
@@ -60,19 +61,35 @@ interface ContentProps {
 function Content({ environment, onClear }: ContentProps) {
   const platform = getPlatformType(environment.Type);
   const Sidebar = getSidebar(platform);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const listId = `environment-sidebar-${environment.Id}`;
+
+  useEffect(() => {
+    setIsExpanded(true);
+  }, [environment.Id]);
 
   return (
     <SidebarSection
-      title={<Title environment={environment} onClear={onClear} />}
+      title={
+        <Title
+          environment={environment}
+          isExpanded={isExpanded}
+          listId={listId}
+          onClear={onClear}
+          onToggle={() => setIsExpanded((isExpanded) => !isExpanded)}
+        />
+      }
       hoverText={environment.Name}
       aria-label={environment.Name}
       showTitleWhenOpen
     >
-      <div className="mt-2">
-        {Sidebar && (
-          <Sidebar environmentId={environment.Id} environment={environment} />
-        )}
-      </div>
+      {isExpanded && (
+        <div id={listId} className="mt-2">
+          {Sidebar && (
+            <Sidebar environmentId={environment.Id} environment={environment} />
+          )}
+        </div>
+      )}
     </SidebarSection>
   );
 
@@ -119,10 +136,19 @@ function useCurrentEnvironment() {
 
 interface TitleProps {
   environment: Environment;
+  isExpanded: boolean;
+  listId: string;
   onClear(): void;
+  onToggle(): void;
 }
 
-function Title({ environment, onClear }: TitleProps) {
+function Title({
+  environment,
+  isExpanded,
+  listId,
+  onClear,
+  onToggle,
+}: TitleProps) {
   const { isOpen } = useSidebarState();
 
   const EnvironmentIcon = getPlatformIconByEnvironment(
@@ -140,22 +166,42 @@ function Title({ environment, onClear }: TitleProps) {
 
   return (
     <div className="flex items-center">
-      <EnvironmentIcon className="mr-3 text-2xl" />
-      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-white">
-        {environment.Name}
-      </span>
-
       <button
-        title="Clear environment"
         type="button"
-        onClick={onClear}
-        className={clsx(
-          styles.closeBtn,
-          'ml-auto mr-2 flex h-5 w-5 items-center justify-center rounded border-0 p-1 text-sm text-white transition-colors duration-200'
-        )}
+        onClick={onToggle}
+        className="flex min-w-0 flex-1 items-center border-0 bg-transparent p-0 text-left text-white"
+        aria-expanded={isExpanded}
+        aria-controls={listId}
       >
-        <X />
+        <EnvironmentIcon className="mr-3 flex-none text-2xl" />
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+          {environment.Name}
+        </span>
       </button>
+
+      <div className="ml-auto mr-2 flex flex-none items-center">
+        <CollapseExpandButton
+          isExpanded={isExpanded}
+          onClick={onToggle}
+          aria-controls={listId}
+          className={clsx(
+            styles.titleIconBtn,
+            'group flex h-5 w-5 items-center justify-center border-0 p-0 text-white'
+          )}
+        />
+
+        <button
+          title="Clear environment"
+          type="button"
+          onClick={onClear}
+          className={clsx(
+            styles.titleIconBtn,
+            'ml-1 flex h-5 w-5 items-center justify-center rounded border-0 p-1 text-sm text-white transition-colors duration-200'
+          )}
+        >
+          <X />
+        </button>
+      </div>
     </div>
   );
 }
