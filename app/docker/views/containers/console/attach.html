@@ -15,17 +15,31 @@
     <rd-widget>
       <rd-widget-header icon="terminal" title-text="Attach"></rd-widget-header>
       <rd-widget-body>
-        <div class="small text-warning" ng-if="!container.Config.OpenStdin">
-          <p>
-            <pr-icon icon="'alert-triangle'" mode="'warning'"></pr-icon>
-            The interactive-flag is not set. You might not be able to use the console properly.
-          </p>
-        </div>
+        <div class="alert alert-warning small" ng-if="!container.Config.OpenStdin || !container.Config.Tty">
+          <div class="vertical-center">
+            <pr-icon icon="'alert-triangle'" mode="'warning'" class-name="'mr-1'"></pr-icon>
+            <strong>Attach console may not work correctly for this container.</strong>
+          </div>
 
-        <div class="small text-warning" ng-if="!container.Config.Tty">
-          <p>
-            <pr-icon icon="'alert-triangle'" mode="'warning'"></pr-icon>
-            The TTY-flag is not set. You might not be able to use the console properly.
+          <p class="mb-1 mt-2">This container was created without full interactive terminal support.</p>
+
+          <ul class="mb-2 pl-6">
+            <li ng-if="!container.Config.OpenStdin">
+              Missing <code>-i</code> / <code>OpenStdin=true</code>: standard input is not kept open.
+            </li>
+            <li ng-if="!container.Config.Tty">
+              Missing <code>-t</code> / <code>Tty=true</code>: no pseudo-terminal was allocated.
+            </li>
+          </ul>
+
+          <p class="mb-1">
+            Attach connects to the container's existing main process. If the container was not started with these options, keyboard input,
+            terminal rendering, or the attach session itself may not behave as expected.
+          </p>
+
+          <p class="mb-0">
+            Recommended: use <strong>Exec Console</strong> to start a new shell process, or recreate the container with interactive and TTY enabled
+            by using <code>docker run -it</code> or Docker Compose <code>stdin_open: true</code> and <code>tty: true</code>.
           </p>
         </div>
 
