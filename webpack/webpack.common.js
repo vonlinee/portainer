@@ -111,6 +111,10 @@ module.exports = {
       {
         context: ['/api'],
         target: 'http://localhost:9000',
+        // option.ws: true/false: if you want to proxy websockets
+        // see: https://github.com/chimurai/http-proxy-middleware#httpxy-options
+        ws: true,
+        // changeOrigin: true,
       },
     ],
     open: true,
