@@ -94,7 +94,50 @@ Linux/macOS/WSL/Git Bash：
 
 如果远程 Docker 使用 TLS，还需要按 Docker/Portainer 的 TLS 连接方式准备证书和相关参数。
 
-## 4. 选择建议
+## 4. 容器 Console：Attach 与 Exec
+
+Portainer 的容器 Console 常见有两种进入方式：
+
+- `Attach Console`：连接到容器已有的主进程。
+- `Exec Console`：在正在运行的容器中启动一个新的进程，例如 `/bin/sh`、`/bin/bash` 或自定义命令。
+
+如果进入 `Attach Console` 时看到类似提示：
+
+```text
+This container was not created with interactive terminal support (-i and -t).
+Attach connects to the container's existing main process, so console input may not work properly.
+Use Exec Console to start a new shell process, or recreate the container with interactive and TTY enabled.
+```
+
+原因是该容器创建时没有开启交互终端相关配置：
+
+- `-i` / `OpenStdin=true`：保持标准输入打开。
+- `-t` / `Tty=true`：分配伪终端。
+
+`Attach Console` 不会新建 shell，它只是接入容器已有主进程的输入输出。如果容器不是用交互终端模式创建的，Attach 后可能无法输入、无法正常显示终端，或一直停留在连接状态。
+
+推荐处理方式：
+
+- 只是想进入容器执行命令时，优先使用 `Exec Console`。
+- 如果必须使用 `Attach Console`，需要重新创建容器并开启交互终端。
+
+Docker 命令示例：
+
+```bash
+docker run -it ...
+```
+
+Docker Compose 示例：
+
+```yaml
+services:
+  app:
+    image: your-image
+    stdin_open: true
+    tty: true
+```
+
+## 5. 选择建议
 
 - 日常使用和生产环境：优先使用 Portainer Agent。
 - 已有安全 TLS Docker API：可以使用 `tcp://host:2376`。
