@@ -377,7 +377,41 @@ ls -l /var/run/docker.sock
 ./dev/run_local_server.sh --enable-setup-token
 ```
 
-### 9.4 先编译再运行后端
+### 9.4 后端数据库
+
+Portainer 后端默认使用内嵌的 BoltDB/bbolt 数据库，不需要单独安装 MySQL、PostgreSQL 或其他外部数据库。
+
+相关代码位置：
+
+- `api/cmd/portainer/main.go`：启动时通过 `database.NewDatabase("boltdb", *flags.Data, secretKey, *flags.CompactDB)` 创建数据库连接。
+- `api/database/boltdb/db.go`：BoltDB/bbolt 的具体实现，底层依赖 `go.etcd.io/bbolt`。
+
+默认数据库文件名：
+
+```text
+portainer.db
+```
+
+数据库文件会写入后端启动参数 `--data` 指定的数据目录中。本地脚本的默认位置为：
+
+- Windows PowerShell：`%LOCALAPPDATA%\PortainerCE\data\portainer.db`
+- Linux/macOS/WSL：`${XDG_DATA_HOME:-$HOME/.local/share}/portainer-ce/data/portainer.db`
+
+如果启动时自定义了数据目录，例如：
+
+```powershell
+.\dev\run_local_server.ps1 -DataPath "$env:TEMP\portainer-ce-data"
+```
+
+或：
+
+```bash
+./dev/run_local_server.sh --data /tmp/portainer-ce-data
+```
+
+则数据库会写入对应目录下的 `portainer.db`。如果启用了数据库加密，也可能出现加密数据库文件 `portainer.edb`。
+
+### 9.5 先编译再运行后端
 
 如果不想每次用 `go run`，也可以先编译：
 
@@ -393,7 +427,7 @@ Windows PowerShell：
 
 注意：`build/build_binary.sh` 会注入更完整的构建版本信息，并复制 `mustache-templates` 到 `dist`。直接 `go build` 更轻量，适合本地调试；如果需要更接近正式构建，仍建议使用仓库脚本或 `make build-server`。
 
-### 9.5 修改默认密码长度
+### 9.6 修改默认密码长度
 
 初始化管理员页面的密码长度不是前端硬编码。前端会调用后端公开 settings，读取 `RequiredPasswordLength`，然后在页面中用它做 `ng-minlength` 校验。
 
