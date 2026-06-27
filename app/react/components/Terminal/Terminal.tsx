@@ -62,6 +62,7 @@ export function Terminal({
     let fitAddon: FitAddon | null = null;
     let cleaned = false;
     let lastSentSize: { rows: number; cols: number } | null = null;
+    let resizeAnimationFrame: number | null = null;
 
     onStateChange('connecting');
 
@@ -69,7 +70,7 @@ export function Terminal({
     socketRef.current = socket;
 
     const resizeObserver = new ResizeObserver(() => {
-      handleResize();
+      scheduleResize();
     });
 
     socket.addEventListener('open', onOpen);
@@ -91,7 +92,7 @@ export function Terminal({
       term.options.cursorBlink = true;
       term.focus();
       setTimeout(() => {
-        handleResize();
+        scheduleResize();
       }, 0);
       term.onData((data) => {
         if (socket.readyState === WebSocket.OPEN) {
@@ -132,12 +133,26 @@ export function Terminal({
       socket.removeEventListener('close', onClose);
       socket.removeEventListener('error', onError);
       resizeObserver.disconnect();
+      if (resizeAnimationFrame !== null) {
+        cancelAnimationFrame(resizeAnimationFrame);
+        resizeAnimationFrame = null;
+      }
       socket.close();
       termRef.current?.dispose();
       termRef.current = null;
       socketRef.current = null;
       fitAddon = null;
       onStateChange('disconnected');
+    }
+
+    function scheduleResize() {
+      if (resizeAnimationFrame !== null) {
+        cancelAnimationFrame(resizeAnimationFrame);
+      }
+      resizeAnimationFrame = requestAnimationFrame(() => {
+        resizeAnimationFrame = null;
+        handleResize();
+      });
     }
 
     function handleResize() {

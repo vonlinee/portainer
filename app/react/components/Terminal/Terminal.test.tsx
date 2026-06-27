@@ -170,14 +170,24 @@ describe('Terminal', () => {
       );
     });
 
-    it('fits terminal when container resizes', async () => {
+    it('schedules terminal fit when container resizes', async () => {
       render(<Terminal url={TEST_URL} connect />);
 
       await waitFor(() => expect(mockTerminalInstance.open).toHaveBeenCalled());
+      await waitFor(() => expect(mockFitAddonInstance.fit).toHaveBeenCalled());
+      vi.mocked(mockFitAddonInstance.fit!).mockClear();
 
-      mockResizeObserverCallback([], {} as ResizeObserver);
+      vi.useFakeTimers();
+      try {
+        mockResizeObserverCallback([], {} as ResizeObserver);
 
-      expect(mockFitAddonInstance.fit).toHaveBeenCalled();
+        expect(mockFitAddonInstance.fit).not.toHaveBeenCalled();
+        vi.advanceTimersToNextFrame();
+
+        expect(mockFitAddonInstance.fit).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
