@@ -23,3 +23,6 @@ go.work.sum
 
 pnpm-lock.yaml
 yarn.lock
+
+# cache directory for go-build
+.cache
