@@ -26,3 +26,5 @@ yarn.lock
 
 # cache directory for go-build
 .cache
+
+.pnpm-store
