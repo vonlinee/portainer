@@ -45,6 +45,7 @@ func CLIFlags() *portainer.CLIFlags {
 		Labels:                    pairs(kingpin.Flag("hide-label", "Hide containers with a specific label in the UI").Short('l')),
 		Logo:                      kingpin.Flag("logo", "URL for the logo displayed in the UI").String(),
 		Templates:                 kingpin.Flag("templates", "URL to the templates definitions.").Short('t').String(),
+		AssetsMode:                kingpin.Flag("assets-mode", "Frontend assets source mode").Default(portainer.AssetsModeFilesystem).Enum(portainer.AssetsModeFilesystem, portainer.AssetsModeEmbedded),
 		BaseURL:                   kingpin.Flag("base-url", "Base URL parameter such as portainer if running portainer as http://yourdomain.com/portainer/.").Short('b').Default(defaultBaseURL).String(),
 		InitialMmapSize:           kingpin.Flag("initial-mmap-size", "Initial mmap size of the database in bytes").Int(),
 		MaxBatchSize:              kingpin.Flag("max-batch-size", "Maximum size of a batch").Int(),

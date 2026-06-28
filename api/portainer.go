@@ -81,6 +81,7 @@ type (
 		AdminPassword             *string
 		AdminPasswordFile         *string
 		Assets                    *string
+		AssetsMode                *string
 		CSP                       *bool
 		CompactDB                 *bool
 		Data                      *string
@@ -671,6 +672,11 @@ type (
 
 	// PolicyType represents the type of policy
 	PolicyType string
+)
+
+const (
+	AssetsModeFilesystem = "filesystem"
+	AssetsModeEmbedded   = "embedded"
 )
 
 type (

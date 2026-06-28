@@ -15,6 +15,7 @@ import (
 	"github.com/portainer/portainer/api/dataservices"
 	"github.com/portainer/portainer/api/docker"
 	dockerclient "github.com/portainer/portainer/api/docker/client"
+	"github.com/portainer/portainer/api/embedded"
 	"github.com/portainer/portainer/api/http/csrf"
 	"github.com/portainer/portainer/api/http/handler"
 	"github.com/portainer/portainer/api/http/handler/auth"
@@ -80,6 +81,7 @@ type Server struct {
 	CSP                         bool
 	HTTPEnabled                 bool
 	AssetsPath                  string
+	AssetsMode                  string
 	Status                      *portainer.Status
 	ReverseTunnelService        portainer.ReverseTunnelService
 	ComposeStackManager         portainer.ComposeStackManager
@@ -204,7 +206,12 @@ func (server *Server) Start(ctx context.Context) error {
 
 	var dockerHandler = dockerhandler.NewHandler(requestBouncer, server.AuthorizationService, server.DataStore, server.DockerClientFactory, containerService)
 
-	var fileHandler = file.NewHandler(filepath.Join(server.AssetsPath, "public"), server.CSP, adminMonitor.WasInstanceDisabled)
+	var fileHandler *file.Handler
+	if server.AssetsMode == portainer.AssetsModeEmbedded {
+		fileHandler = file.NewEmbeddedHandler(embedded.PublicFS(), server.CSP, adminMonitor.WasInstanceDisabled)
+	} else {
+		fileHandler = file.NewHandler(filepath.Join(server.AssetsPath, "public"), server.CSP, adminMonitor.WasInstanceDisabled)
+	}
 
 	var endpointHelmHandler = helm.NewHandler(requestBouncer, server.DataStore, server.JWTService, server.KubernetesDeployer, server.HelmPackageManager, server.KubeClusterAccessService)
 

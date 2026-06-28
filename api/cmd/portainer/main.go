@@ -628,6 +628,7 @@ func buildServer(flags *portainer.CLIFlags, shutdownCtx context.Context, shutdow
 		CSP:                         *flags.CSP,
 		HTTPEnabled:                 sslDBSettings.HTTPEnabled,
 		AssetsPath:                  *flags.Assets,
+		AssetsMode:                  *flags.AssetsMode,
 		DataStore:                   dataStore,
 		EdgeStacksService:           edgeStacksService,
 		SwarmStackManager:           swarmStackManager,

@@ -1,6 +1,7 @@
 package file
 
 import (
+	"io/fs"
 	"net/http"
 	"strings"
 
@@ -18,9 +19,18 @@ type Handler struct {
 
 // NewHandler creates a handler to serve static files.
 func NewHandler(assetPublicPath string, csp bool, wasInstanceDisabled func() bool) *Handler {
+	return newHandler(http.Dir(assetPublicPath), csp, wasInstanceDisabled)
+}
+
+// NewEmbeddedHandler creates a handler to serve embedded static files.
+func NewEmbeddedHandler(assetPublicFS fs.FS, csp bool, wasInstanceDisabled func() bool) *Handler {
+	return newHandler(http.FS(assetPublicFS), csp, wasInstanceDisabled)
+}
+
+func newHandler(fileSystem http.FileSystem, csp bool, wasInstanceDisabled func() bool) *Handler {
 	h := &Handler{
 		Handler: security.MWSecureHeaders(
-			gzhttp.GzipHandler(http.FileServer(http.Dir(assetPublicPath))),
+			gzhttp.GzipHandler(http.FileServer(fileSystem)),
 			featureflags.IsEnabled("hsts"),
 			csp,
 		),
