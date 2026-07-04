@@ -1,4 +1,6 @@
 import React, { ReactNode, useMemo } from 'react';
+import { useRouter } from '@uirouter/react';
+import { Plus } from 'lucide-react';
 
 import {
   Environment,
@@ -29,6 +31,7 @@ import { UpdateBadge } from '@/react/portainer/HomeView/EnvironmentList/UpdateBa
 import { KubeconfigButton } from '@/react/portainer/HomeView/EnvironmentList/KubeconfigButton';
 import { EnvironmentCard } from '@/react/portainer/HomeView/EnvironmentList/EnvironmentItem/EnvironmentCard';
 
+import { Button } from '@@/buttons';
 import { DropdownOption } from '@@/DropdownMenu/DropdownMenu';
 import {
   SortableGroup,
@@ -102,6 +105,7 @@ const GROUP_FIELD: Partial<Record<SortType, (item: EnvironmentRow) => string>> =
   };
 
 export function EnvironmentList({ onClickBrowse }: Props) {
+  const router = useRouter();
   const isPureAdmin = useIsPureAdmin();
   const summaryQuery = useEnvironmentSummaryCounts();
 
@@ -174,6 +178,20 @@ export function EnvironmentList({ onClickBrowse }: Props) {
 
   const headerButtons = [
     updateAvailable && <UpdateBadge key="update-badge" />,
+    <Button
+      key="add-environment-button"
+      icon={Plus}
+      className="!m-0"
+      color="light"
+      data-cy="home-add-environment-button"
+      onClick={() =>
+        router.stateService.go('portainer.wizard.endpoints', {
+          referrer: 'home',
+        })
+      }
+    >
+      Add environment
+    </Button>,
     <KubeconfigButton
       key="kube-config-button"
       environments={environments}

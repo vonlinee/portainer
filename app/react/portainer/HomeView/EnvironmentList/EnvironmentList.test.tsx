@@ -137,6 +137,24 @@ test('sort buttons are rendered for each sort option', async () => {
   ).resolves.toBeVisible();
 });
 
+test('clicking add environment opens the environment creation wizard', async () => {
+  const user = userEvent.setup();
+
+  await renderComponent(true, []);
+
+  const addEnvironmentButton = await screen.findByRole('button', {
+    name: /Add environment/i,
+  });
+  expect(addEnvironmentButton).toHaveClass('btn-light');
+
+  await user.click(addEnvironmentButton);
+
+  expect(mockStateServiceGo).toHaveBeenCalledWith(
+    'portainer.wizard.endpoints',
+    { referrer: 'home' }
+  );
+});
+
 test('clicking inactive sort button switches active sort', async () => {
   const user = userEvent.setup();
   await renderComponent(false, []);
