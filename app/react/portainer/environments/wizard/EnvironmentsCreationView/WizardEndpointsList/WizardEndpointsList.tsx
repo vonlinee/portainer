@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { stripProtocol } from '@/react/common/string-utils';
 import { endpointTypeName } from '@/portainer/filters/filters';
 import {
+  getDashboardRoute,
   getEnvironmentTypeIcon,
   isEdgeEnvironment,
   isUnassociatedEdgeEnvironment,
@@ -17,6 +18,7 @@ import {
 import { EdgeIndicator } from '@@/EdgeIndicator';
 import { Widget, WidgetBody, WidgetTitle } from '@@/Widget';
 import { Icon } from '@@/Icon';
+import { Link } from '@@/Link';
 
 import styles from './WizardEndpointsList.module.css';
 
@@ -48,36 +50,46 @@ export function WizardEndpointsList({ environmentIds }: Props) {
     <Widget>
       <WidgetTitle icon={Plug2} title="New Environments" />
       <WidgetBody>
-        {environments.map((environment) => (
-          <div className={styles.wizardListWrapper} key={environment.Id}>
-            <div
-              className={clsx(
-                styles.wizardListImage,
-                'text-5xl text-blue-8 th-highcontrast:text-white th-dark:text-blue-7'
-              )}
+        {environments.map((environment) => {
+          const dashboardRoute = getDashboardRoute(environment);
+
+          return (
+            <Link
+              className={clsx(styles.wizardListWrapper, 'no-link')}
+              key={environment.Id}
+              to={dashboardRoute.to}
+              params={dashboardRoute.params}
+              data-cy={`environment-wizard-link-${environment.Name}`}
             >
-              <Icon
-                icon={getEnvironmentTypeIcon(
-                  environment.Type,
-                  environment.ContainerEngine
+              <div
+                className={clsx(
+                  styles.wizardListImage,
+                  'text-5xl text-blue-8 th-highcontrast:text-white th-dark:text-blue-7'
                 )}
-                className="mr-1"
-              />
-            </div>
-            <div className={styles.wizardListTitle}>{environment.Name}</div>
-            <div className={styles.wizardListSubtitle}>
-              URL: {stripProtocol(environment.URL)}
-            </div>
-            <div className={styles.wizardListType}>
-              Type: {endpointTypeName(environment.Type)}
-            </div>
-            {isEdgeEnvironment(environment.Type) && (
-              <div className={styles.wizardListEdgeStatus}>
-                <EdgeIndicator environment={environment} />
+              >
+                <Icon
+                  icon={getEnvironmentTypeIcon(
+                    environment.Type,
+                    environment.ContainerEngine
+                  )}
+                  className="mr-1"
+                />
               </div>
-            )}
-          </div>
-        ))}
+              <div className={styles.wizardListTitle}>{environment.Name}</div>
+              <div className={styles.wizardListSubtitle}>
+                URL: {stripProtocol(environment.URL)}
+              </div>
+              <div className={styles.wizardListType}>
+                Type: {endpointTypeName(environment.Type)}
+              </div>
+              {isEdgeEnvironment(environment.Type) && (
+                <div className={styles.wizardListEdgeStatus}>
+                  <EdgeIndicator environment={environment} />
+                </div>
+              )}
+            </Link>
+          );
+        })}
       </WidgetBody>
     </Widget>
   );
