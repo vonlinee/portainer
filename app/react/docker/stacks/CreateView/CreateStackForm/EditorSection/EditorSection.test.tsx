@@ -8,6 +8,26 @@ import { mockFormValues } from '../test-utils';
 import { EditorFormValues } from './types';
 import { EditorSection } from './EditorSection';
 
+vi.mock('@@/MonacoEditor', () => ({
+  MonacoEditor: ({
+    value,
+    language,
+    'data-cy': dataCy,
+  }: {
+    value: string;
+    language: string;
+    'data-cy': string;
+  }) => (
+    <textarea
+      data-cy={dataCy}
+      data-language={language}
+      readOnly
+      value={value}
+      aria-label="Monaco Editor"
+    />
+  ),
+}));
+
 describe('EditorSection', () => {
   it('should render the component', () => {
     renderComponent();
@@ -43,6 +63,7 @@ describe('EditorSection', () => {
 
     const textarea = screen.getByRole('textbox');
     expect(textarea).toHaveValue(value);
+    expect(textarea).toHaveAttribute('data-language', 'yaml');
   });
 });
 

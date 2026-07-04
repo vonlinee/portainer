@@ -1,17 +1,31 @@
-import { ReactNode, ComponentProps, PropsWithChildren, useMemo } from 'react';
+import { ReactNode, PropsWithChildren, useMemo } from 'react';
 import { JSONSchema7 } from 'json-schema';
 
-import { CodeEditor } from '@@/CodeEditor';
+import { CopyButton } from '@@/buttons/CopyButton';
+import {
+  MonacoEditor,
+  MonacoEditorLanguage,
+  MonacoEditorProps,
+} from '@@/MonacoEditor';
 
 import { FormSectionTitle } from './form-components/FormSectionTitle';
 import { FormError } from './form-components/FormError';
 import { usePreventFormExit } from './form-components/usePreventFormExit';
 import { confirmWebEditorDiscard } from './modals/confirm';
 import { ShortcutsTooltip } from './CodeEditor/ShortcutsTooltip';
+import { TextTip } from './Tip/TextTip';
 
-type CodeEditorProps = ComponentProps<typeof CodeEditor>;
+type EditorProps = Omit<MonacoEditorProps, 'language'> & {
+  type?: MonacoEditorLanguage;
+  language?: MonacoEditorLanguage;
+  textTip?: string;
+  showToolbar?: boolean;
+  fileName?: string;
+  versions?: number[];
+  onVersionChange?: (version: number) => void;
+};
 
-interface Props extends CodeEditorProps {
+interface Props extends EditorProps {
   titleContent?: ReactNode;
   hideTitle?: boolean;
   error?: string;
@@ -24,15 +38,26 @@ export function WebEditorForm({
   hideTitle,
   children,
   error,
-  schema,
   textTip,
+  type = 'yaml',
+  language,
+  showToolbar = true,
+  value,
+  versions,
+  onVersionChange,
   ...props
 }: PropsWithChildren<Props>) {
+  const editorLanguage = language || type;
+  const editorValue = value || '';
+  void versions;
+  void onVersionChange;
+  const editorId = id || 'web-editor';
+
   return (
     <div>
       <div className="web-editor overflow-x-hidden">
         {!hideTitle && (
-          <DefaultTitle id={id}>{titleContent ?? null}</DefaultTitle>
+          <DefaultTitle id={editorId}>{titleContent ?? null}</DefaultTitle>
         )}
         {children && (
           <div className="form-group text-muted small">
@@ -44,11 +69,25 @@ export function WebEditorForm({
 
         <div className="form-group">
           <div className="col-sm-12 col-lg-12">
-            <CodeEditor
-              id={id}
-              type="yaml"
-              schema={schema as JSONSchema7}
-              textTip={textTip}
+            {showToolbar && (
+              <div className="mb-2 flex items-center justify-between">
+                {!!textTip && <TextTip color="blue">{textTip}</TextTip>}
+                <CopyButton
+                  data-cy={`copy-code-button-${editorId}`}
+                  fadeDelay={2500}
+                  copyText={editorValue}
+                  color="link"
+                  className="!pr-0 !text-sm !font-medium hover:no-underline focus:no-underline"
+                  indicatorPosition="left"
+                >
+                  Copy
+                </CopyButton>
+              </div>
+            )}
+            <MonacoEditor
+              id={editorId}
+              value={editorValue}
+              language={editorLanguage}
               // eslint-disable-next-line react/jsx-props-no-spreading
               {...props}
             />

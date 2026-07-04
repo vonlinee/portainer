@@ -23,6 +23,25 @@ vi.mock('@/react/hooks/useDebounce', () => ({
   ],
 }));
 
+vi.mock('@@/MonacoEditor', () => ({
+  MonacoEditor: ({
+    value,
+    onChange,
+    'data-cy': dataCy,
+  }: {
+    value: string;
+    onChange?: (value: string) => void;
+    'data-cy': string;
+  }) => (
+    <textarea
+      data-cy={dataCy}
+      value={value}
+      onChange={(event) => onChange?.(event.target.value)}
+      aria-label="Monaco Editor"
+    />
+  ),
+}));
+
 vi.mock('@/portainer/services/notifications', () => ({
   notifyError: vi.fn(),
   notifySuccess: vi.fn(),
