@@ -1,5 +1,5 @@
-import { User as UserIcon } from 'lucide-react';
-import { useMemo } from 'react';
+import { Plus, User as UserIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useUsers } from '@/portainer/users/queries';
@@ -19,10 +19,13 @@ import { Datatable } from '@@/datatables';
 import { useTableState } from '@@/datatables/useTableState';
 import { createPersistedStore } from '@@/datatables/types';
 import { DeleteButton } from '@@/buttons/DeleteButton';
+import { Button } from '@@/buttons';
+import { Modal } from '@@/modals/Modal';
 
 import { useTeamMemberships } from '../../teams/queries/useTeamMemberships';
 import { TeamId, TeamRole } from '../../teams/types';
 import { deleteUser } from '../../queries/useDeleteUserMutation';
+import { NewUserForm } from '../NewUserForm/NewUserForm';
 
 import { columns } from './columns';
 import { DecoratedUser } from './types';
@@ -31,6 +34,7 @@ const store = createPersistedStore('users');
 
 export function UsersDatatable() {
   const removeMutation = useRemoveMutation();
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const { isPureAdmin } = useCurrentUser();
   const usersQuery = useUsers(isPureAdmin);
   const membershipsQuery = useTeamMemberships();
@@ -63,34 +67,61 @@ export function UsersDatatable() {
   }, [membershipsQuery.data, settingsQuery.data, usersQuery.data]);
 
   return (
-    <Datatable
-      columns={columns}
-      dataset={dataset || []}
-      isLoading={!dataset}
-      title="Users"
-      titleIcon={UserIcon}
-      settingsManager={tableState}
-      isRowSelectable={(row) => row.original.Id !== 1}
-      renderTableActions={(selectedUsers) => (
-        <DeleteButton
-          disabled={selectedUsers.length === 0}
-          confirmMessage="Do you want to remove the selected users? They will not be able to login into Portainer anymore."
-          onConfirmed={() =>
-            removeMutation.mutate(
-              selectedUsers.map((i) => i.Id),
-              {
-                onSuccess: () => {
-                  notifySuccess('Users successfully removed', '');
-                },
+    <>
+      <Datatable
+        columns={columns}
+        dataset={dataset || []}
+        isLoading={!dataset}
+        title="Users"
+        titleIcon={UserIcon}
+        settingsManager={tableState}
+        isRowSelectable={(row) => row.original.Id !== 1}
+        renderTableActions={(selectedUsers) => (
+          <>
+            <Button
+              icon={Plus}
+              data-cy="create-user-button"
+              onClick={() => setIsCreateUserModalOpen(true)}
+            >
+              Create user
+            </Button>
+
+            <DeleteButton
+              disabled={selectedUsers.length === 0}
+              confirmMessage="Do you want to remove the selected users? They will not be able to login into Portainer anymore."
+              onConfirmed={() =>
+                removeMutation.mutate(
+                  selectedUsers.map((i) => i.Id),
+                  {
+                    onSuccess: () => {
+                      notifySuccess('Users successfully removed', '');
+                    },
+                  }
+                )
               }
-            )
-          }
-          data-cy="remove-users-button"
-          isLoading={removeMutation.isLoading}
-        />
+              data-cy="remove-users-button"
+              isLoading={removeMutation.isLoading}
+            />
+          </>
+        )}
+        data-cy="users-datatable"
+      />
+      {isCreateUserModalOpen && (
+        <Modal
+          onDismiss={() => setIsCreateUserModalOpen(false)}
+          aria-label="Create user"
+          size="lg"
+        >
+          <Modal.Header title="Add a new user" />
+          <Modal.Body>
+            <NewUserForm
+              showWidget={false}
+              onSuccess={() => setIsCreateUserModalOpen(false)}
+            />
+          </Modal.Body>
+        </Modal>
       )}
-      data-cy="users-datatable"
-    />
+    </>
   );
 }
 
