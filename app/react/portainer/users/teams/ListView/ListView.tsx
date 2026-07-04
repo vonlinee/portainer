@@ -5,7 +5,6 @@ import { PageHeader } from '@@/PageHeader';
 
 import { useTeams } from '../queries';
 
-import { CreateTeamForm } from './CreateTeamForm';
 import { TeamsDatatable } from './TeamsDatatable';
 
 export function ListView() {
@@ -22,12 +21,13 @@ export function ListView() {
         reload
       />
 
-      {isPureAdmin && usersQuery.data && teamsQuery.data && (
-        <CreateTeamForm users={usersQuery.data} teams={teamsQuery.data} />
-      )}
-
       {teamsQuery.data && (
-        <TeamsDatatable teams={teamsQuery.data} isAdmin={isPureAdmin} />
+        <TeamsDatatable
+          teams={teamsQuery.data}
+          users={usersQuery.data || []}
+          isLoadingUsers={!usersQuery.data}
+          isAdmin={isPureAdmin}
+        />
       )}
     </>
   );

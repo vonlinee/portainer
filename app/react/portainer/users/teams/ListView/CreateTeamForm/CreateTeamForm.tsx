@@ -22,9 +22,16 @@ import { validationSchema } from './CreateTeamForm.validation';
 interface Props {
   users: User[];
   teams: Team[];
+  onSuccess?(): void;
+  showWidget?: boolean;
 }
 
-export function CreateTeamForm({ users, teams }: Props) {
+export function CreateTeamForm({
+  users,
+  teams,
+  onSuccess,
+  showWidget = true,
+}: Props) {
   const addTeamMutation = useAddTeamMutation();
   const [formKey, incFormKey] = useReducer((state: number) => state + 1, 0);
   const teamSyncQuery = usePublicSettings<boolean>({
@@ -36,6 +43,92 @@ export function CreateTeamForm({ users, teams }: Props) {
     leaders: [],
   };
 
+  const form = (
+    <Formik
+      initialValues={initialValues}
+      validationSchema={() => validationSchema(teams)}
+      onSubmit={handleAddTeamClick}
+      validateOnMount
+      key={formKey}
+    >
+      {({
+        values,
+        errors,
+        handleSubmit,
+        setFieldValue,
+        isSubmitting,
+        isValid,
+      }) => (
+        <Form className="form-horizontal" onSubmit={handleSubmit} noValidate>
+          <FormControl
+            inputId="team_name"
+            label="Name"
+            errors={errors.name}
+            required
+          >
+            <Field
+              as={Input}
+              name="name"
+              id="team_name"
+              required
+              placeholder="e.g. development"
+              data-cy="team-teamNameInput"
+            />
+          </FormControl>
+
+          {users.length > 0 && (
+            <FormControl
+              inputId="users-input"
+              label="Select team leader(s)"
+              tooltip="You can assign one or more leaders to this team. Team leaders can manage their teams users and resources."
+              errors={errors.leaders}
+            >
+              <UsersSelector
+                value={values.leaders}
+                onChange={(leaders) => setFieldValue('leaders', leaders)}
+                users={users}
+                dataCy="team-teamLeaderSelect"
+                inputId="users-input"
+                placeholder="Select one or more team leaders"
+                disabled={teamSyncQuery.data}
+              />
+            </FormControl>
+          )}
+
+          {teamSyncQuery.data && (
+            <div className="form-group">
+              <div className="col-sm-12">
+                <TextTip color="orange">
+                  The team leader feature is disabled as external authentication
+                  is currently enabled with team sync.
+                </TextTip>
+              </div>
+            </div>
+          )}
+
+          <div className="form-group">
+            <div className="col-sm-12">
+              <LoadingButton
+                disabled={!isValid}
+                data-cy="team-createTeamButton"
+                isLoading={isSubmitting || addTeamMutation.isLoading}
+                loadingText="Creating team..."
+                icon={Plus}
+                className="!ml-0"
+              >
+                Create team
+              </LoadingButton>
+            </div>
+          </div>
+        </Form>
+      )}
+    </Formik>
+  );
+
+  if (!showWidget) {
+    return form;
+  }
+
   return (
     <div className="row">
       <div className="col-lg-12 col-md-12 col-xs-12">
@@ -45,93 +138,7 @@ export function CreateTeamForm({ users, teams }: Props) {
             title="Add a new team"
             className="vertical-center"
           />
-          <Widget.Body>
-            <Formik
-              initialValues={initialValues}
-              validationSchema={() => validationSchema(teams)}
-              onSubmit={handleAddTeamClick}
-              validateOnMount
-              key={formKey}
-            >
-              {({
-                values,
-                errors,
-                handleSubmit,
-                setFieldValue,
-                isSubmitting,
-                isValid,
-              }) => (
-                <Form
-                  className="form-horizontal"
-                  onSubmit={handleSubmit}
-                  noValidate
-                >
-                  <FormControl
-                    inputId="team_name"
-                    label="Name"
-                    errors={errors.name}
-                    required
-                  >
-                    <Field
-                      as={Input}
-                      name="name"
-                      id="team_name"
-                      required
-                      placeholder="e.g. development"
-                      data-cy="team-teamNameInput"
-                    />
-                  </FormControl>
-
-                  {users.length > 0 && (
-                    <FormControl
-                      inputId="users-input"
-                      label="Select team leader(s)"
-                      tooltip="You can assign one or more leaders to this team. Team leaders can manage their teams users and resources."
-                      errors={errors.leaders}
-                    >
-                      <UsersSelector
-                        value={values.leaders}
-                        onChange={(leaders) =>
-                          setFieldValue('leaders', leaders)
-                        }
-                        users={users}
-                        dataCy="team-teamLeaderSelect"
-                        inputId="users-input"
-                        placeholder="Select one or more team leaders"
-                        disabled={teamSyncQuery.data}
-                      />
-                    </FormControl>
-                  )}
-
-                  {teamSyncQuery.data && (
-                    <div className="form-group">
-                      <div className="col-sm-12">
-                        <TextTip color="orange">
-                          The team leader feature is disabled as external
-                          authentication is currently enabled with team sync.
-                        </TextTip>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="form-group">
-                    <div className="col-sm-12">
-                      <LoadingButton
-                        disabled={!isValid}
-                        data-cy="team-createTeamButton"
-                        isLoading={isSubmitting || addTeamMutation.isLoading}
-                        loadingText="Creating team..."
-                        icon={Plus}
-                        className="!ml-0"
-                      >
-                        Create team
-                      </LoadingButton>
-                    </div>
-                  </div>
-                </Form>
-              )}
-            </Formik>
-          </Widget.Body>
+          <Widget.Body>{form}</Widget.Body>
         </Widget>
       </div>
     </div>
@@ -142,6 +149,7 @@ export function CreateTeamForm({ users, teams }: Props) {
       onSuccess() {
         incFormKey();
         notifySuccess('Team successfully added', '');
+        onSuccess?.();
       },
     });
   }

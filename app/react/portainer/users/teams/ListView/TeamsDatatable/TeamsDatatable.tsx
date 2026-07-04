@@ -1,18 +1,23 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, Users } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 import { notifySuccess } from '@/portainer/services/notifications';
 import { promiseSequence } from '@/portainer/helpers/promise-utils';
 import { Team, TeamId } from '@/react/portainer/users/teams/types';
+import { User } from '@/portainer/users/types';
 
 import { Datatable } from '@@/datatables';
 import { buildNameColumn } from '@@/datatables/buildNameColumn';
 import { createPersistedStore } from '@@/datatables/types';
 import { useTableState } from '@@/datatables/useTableState';
 import { DeleteButton } from '@@/buttons/DeleteButton';
+import { Button } from '@@/buttons';
+import { Modal } from '@@/modals/Modal';
 
 import { deleteTeam } from '../../queries/useDeleteTeamMutation';
+import { CreateTeamForm } from '../CreateTeamForm';
 
 const storageKey = 'teams';
 
@@ -22,34 +27,72 @@ const columns: ColumnDef<Team>[] = [
 
 interface Props {
   teams: Team[];
+  users: User[];
+  isLoadingUsers: boolean;
   isAdmin: boolean;
 }
 
 const settingsStore = createPersistedStore(storageKey, 'name');
 
-export function TeamsDatatable({ teams, isAdmin }: Props) {
+export function TeamsDatatable({
+  teams,
+  users,
+  isLoadingUsers,
+  isAdmin,
+}: Props) {
   const { handleRemove } = useRemoveMutation();
+  const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false);
   const tableState = useTableState(settingsStore, storageKey);
 
   return (
-    <Datatable<Team>
-      dataset={teams}
-      columns={columns}
-      settingsManager={tableState}
-      title="Teams"
-      titleIcon={Users}
-      renderTableActions={(selectedRows) =>
-        isAdmin && (
-          <DeleteButton
-            onConfirmed={() => handleRemoveClick(selectedRows)}
-            disabled={selectedRows.length === 0}
-            confirmMessage="Are you sure you want to remove the selected teams?"
-            data-cy="remove-teams-button"
-          />
-        )
-      }
-      data-cy="teams-datatable"
-    />
+    <>
+      <Datatable<Team>
+        dataset={teams}
+        columns={columns}
+        settingsManager={tableState}
+        title="Teams"
+        titleIcon={Users}
+        renderTableActions={(selectedRows) =>
+          isAdmin && (
+            <>
+              <Button
+                icon={Plus}
+                data-cy="create-team-button"
+                disabled={isLoadingUsers}
+                onClick={() => setIsCreateTeamModalOpen(true)}
+              >
+                Create team
+              </Button>
+
+              <DeleteButton
+                onConfirmed={() => handleRemoveClick(selectedRows)}
+                disabled={selectedRows.length === 0}
+                confirmMessage="Are you sure you want to remove the selected teams?"
+                data-cy="remove-teams-button"
+              />
+            </>
+          )
+        }
+        data-cy="teams-datatable"
+      />
+      {isCreateTeamModalOpen && (
+        <Modal
+          onDismiss={() => setIsCreateTeamModalOpen(false)}
+          aria-label="Create team"
+          size="lg"
+        >
+          <Modal.Header title="Add a new team" />
+          <Modal.Body>
+            <CreateTeamForm
+              users={users}
+              teams={teams}
+              showWidget={false}
+              onSuccess={() => setIsCreateTeamModalOpen(false)}
+            />
+          </Modal.Body>
+        </Modal>
+      )}
+    </>
   );
 
   function handleRemoveClick(selectedRows: Team[]) {
